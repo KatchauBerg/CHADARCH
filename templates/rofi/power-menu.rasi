@@ -1,0 +1,80 @@
+/* Power Menu — HyDE Selector Horizontal Grid */
+
+* {
+    bg:           #{{BASE}}cc;
+    bg-alt:       #{{MANTLE}}ee;
+    fg:           #{{TEXT}};
+    fg-alt:       #{{SUBTEXT0}};
+    accent:       #{{ACCENT}};
+    accent-alt:   #{{ACCENT_ALT}};
+    urgent:       #{{RED}};
+    surface:      #{{SURFACE0}};
+    transparent:  #00000000;
+
+    font: "CaskaydiaCove Nerd Font 28";
+
+    background-color: @transparent;
+    text-color:       @fg;
+}
+
+window {
+    transparency:     "real";
+    width:            520px;
+    padding:          0;
+    border:           2px solid;
+    border-color:     @accent;
+    border-radius:    16px;
+    background-color: @bg;
+    location:         center;
+    anchor:           center;
+}
+
+mainbox {
+    spacing:          0;
+    padding:          0;
+    background-color: @transparent;
+    children:         [ "listview" ];
+}
+
+listview {
+    columns:          4;
+    lines:            1;
+    fixed-height:     true;
+    padding:          24px;
+    spacing:          16px;
+    scrollbar:        false;
+    background-color: @transparent;
+    cycle:            true;
+    layout:           vertical;
+}
+
+element {
+    orientation:      vertical;
+    padding:          24px 16px;
+    spacing:          12px;
+    border-radius:    12px;
+    background-color: @transparent;
+    cursor:           pointer;
+}
+
+element normal.normal {
+    background-color: @transparent;
+    text-color:       @fg;
+}
+
+element selected.normal {
+    background-color: @accent;
+    text-color:       @bg-alt;
+}
+
+element-text {
+    horizontal-align: 0.5;
+    vertical-align:   0.5;
+    font:             "CaskaydiaCove Nerd Font 10";
+    cursor:           inherit;
+}
+
+element-icon {
+    horizontal-align: 0.5;
+    size:             0;
+}

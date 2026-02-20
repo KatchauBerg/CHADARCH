@@ -1,0 +1,122 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
+format = """
+[░▒▓](#ff0000)\
+[  ](bg:#ff0000 fg:#000000)\
+[](bg:#d50000 fg:#ff0000)\
+$directory\
+[](fg:#d50000 bg:#1a1a1a)\
+$git_branch\
+$git_status\
+[](fg:#1a1a1a bg:#0a0a0a)\
+$c\
+$rust\
+$golang\
+$nodejs\
+$php\
+$java\
+$kotlin\
+$haskell\
+$python\
+[](fg:#0a0a0a bg:#060606)\
+$time\
+[ ](fg:#060606)\
+\n$character"""
+
+[directory]
+style = "fg:#d0d0d0 bg:#d50000"
+format = "[ $path ]($style)"
+truncation_length = 3
+truncation_symbol = "…/"
+
+[directory.substitutions]
+"Documents" = "󰈙 "
+"Downloads" = " "
+"Music" = "󰝚 "
+"Pictures" = " "
+"Developer" = "󰲋 "
+
+[git_branch]
+symbol = ""
+style = "bg:#1a1a1a"
+format = '[[ $symbol $branch ](fg:#ff0000 bg:#1a1a1a)]($style)'
+
+[git_status]
+style = "bg:#1a1a1a"
+format = '[[($all_status$ahead_behind )](fg:#ff0000 bg:#1a1a1a)]($style)'
+
+[nodejs]
+symbol = ""
+style = "bg:#0a0a0a"
+format = '[[ $symbol ($version) ](fg:#ff1744 bg:#0a0a0a)]($style)'
+
+[c]
+symbol = " "
+style = "bg:#0a0a0a"
+format = '[[ $symbol ($version) ](fg:#ff1744 bg:#0a0a0a)]($style)'
+
+[rust]
+symbol = ""
+style = "bg:#0a0a0a"
+format = '[[ $symbol ($version) ](fg:#ff1744 bg:#0a0a0a)]($style)'
+
+[golang]
+symbol = ""
+style = "bg:#0a0a0a"
+format = '[[ $symbol ($version) ](fg:#ff1744 bg:#0a0a0a)]($style)'
+
+[php]
+symbol = ""
+style = "bg:#0a0a0a"
+format = '[[ $symbol ($version) ](fg:#ff1744 bg:#0a0a0a)]($style)'
+
+[java]
+symbol = " "
+style = "bg:#0a0a0a"
+format = '[[ $symbol ($version) ](fg:#ff1744 bg:#0a0a0a)]($style)'
+
+[kotlin]
+symbol = ""
+style = "bg:#0a0a0a"
+format = '[[ $symbol ($version) ](fg:#ff1744 bg:#0a0a0a)]($style)'
+
+[haskell]
+symbol = ""
+style = "bg:#0a0a0a"
+format = '[[ $symbol ($version) ](fg:#ff1744 bg:#0a0a0a)]($style)'
+
+[python]
+symbol = ""
+style = "bg:#0a0a0a"
+format = '[[ $symbol ($version)(\(#$virtualenv\)) ](fg:#ff1744 bg:#0a0a0a)]($style)'
+
+[docker_context]
+symbol = ""
+style = "bg:#0a0a0a"
+format = '[[ $symbol ($context) ](fg:#ff1744 bg:#0a0a0a)]($style)'
+
+[time]
+disabled = false
+time_format = "%R"
+style = "bg:#060606"
+format = '[[   $time ](fg:#b8b8b8 bg:#060606)]($style)'
+
+[line_break]
+disabled = false
+
+[character]
+disabled = false
+success_symbol = '[root@hack ❯](bold fg:#ff0000)'
+error_symbol = '[root@hack ✗](bold fg:#d50000)'
+vimcmd_symbol = '[❮](bold fg:#ff0000)'
+vimcmd_replace_one_symbol = '[❮](bold fg:#ff3d00)'
+vimcmd_replace_symbol = '[❮](bold fg:#ff3d00)'
+vimcmd_visual_symbol = '[❮](bold fg:#ff6e40)'
+
+[cmd_duration]
+show_milliseconds = true
+format = " in $duration "
+style = "fg:#ff1744"
+disabled = false
+show_notifications = true
+min_time_to_notify = 45000
