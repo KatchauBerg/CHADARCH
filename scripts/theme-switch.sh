@@ -119,9 +119,18 @@ mkdir -p "$HOME/.config/fastfetch"
 process_template "$DOTFILES_DIR/templates/fastfetch/config.jsonc" \
     "$HOME/.config/fastfetch/config.jsonc"
 LOGO_FILE=$(find "$THEME_DIR/fastfetch" -maxdepth 1 -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.webp" \) 2>/dev/null | head -1)
+LOGO_SCRIPT="$THEME_DIR/fastfetch/logo.py"
 if [[ -n "$LOGO_FILE" ]]; then
     magick "$LOGO_FILE" -resize 300x300 "$HOME/.config/fastfetch/logo.png"
     ok "fastfetch logo"
+elif [[ -f "$LOGO_SCRIPT" ]]; then
+    python3 "$LOGO_SCRIPT" > "$HOME/.config/fastfetch/logo.txt"
+    sed -i \
+        -e 's|"type": "kitty-direct"|"type": "raw"|' \
+        -e 's|"source": "[^"]*"|"source": "'"$HOME"'/.config/fastfetch/logo.txt"|' \
+        -e 's|"width": [0-9]*|"width": 26|' \
+        "$HOME/.config/fastfetch/config.jsonc"
+    ok "fastfetch logo (text art)"
 else
     rm -f "$HOME/.config/fastfetch/logo.png"
     sed -i 's/"type": "kitty-direct"/"type": "auto"/; s/"source": ".*"/"source": "auto"/' "$HOME/.config/fastfetch/config.jsonc"

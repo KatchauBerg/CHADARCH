@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # Catppuccin Mocha - https://catppuccin.com/palette
-
 # Base colors
 export BASE="1e1e2e"
 export MANTLE="181825"

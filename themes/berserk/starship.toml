@@ -1,0 +1,165 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
+palette = 'berserk'
+
+# ─── Layout ───────────────────────────────────────────────────────────────────
+#  𖤐 user ── ~/path ──  branch ✦1 ──  py 3.12            12:34
+#  𖤐
+# ──────────────────────────────────────────────────────────────────────────────
+
+format = """
+[𖤐 ](bold fg:red)\
+$username\
+[ ── ](fg:overlay1)\
+$directory\
+$git_branch\
+$git_status\
+$c\
+$rust\
+$golang\
+$nodejs\
+$php\
+$java\
+$kotlin\
+$haskell\
+$python\
+$docker_context\
+$conda\
+$cmd_duration\
+$fill\
+$time\
+$line_break\
+$character"""
+
+# ─── User ─────────────────────────────────────────────────────────────────────
+[username]
+show_always = true
+style_user = "fg:subtext1"
+style_root = "bold fg:red"
+format = '[$user]($style)'
+
+# ─── Directory ────────────────────────────────────────────────────────────────
+[directory]
+style = "fg:peach"
+format = '[$path](fg:peach)'
+truncation_length = 3
+truncation_symbol = "…/"
+
+[directory.substitutions]
+"Documents" = "󰈙 "
+"Downloads" = " "
+"Music"     = "󰝚 "
+"Pictures"  = " "
+"Developer" = "󰲋 "
+
+# ─── Git ──────────────────────────────────────────────────────────────────────
+[git_branch]
+symbol = ""
+format = '[ ── ](fg:overlay1)[$symbol $branch ](fg:yellow)'
+
+[git_status]
+format = '[($all_status$ahead_behind )](fg:red)'
+
+# ─── Languages ────────────────────────────────────────────────────────────────
+[c]
+symbol = " "
+format = '[ ── ](fg:overlay1)[$symbol$version](fg:green)'
+
+[rust]
+symbol = ""
+format = '[ ── ](fg:overlay1)[$symbol $version](fg:green)'
+
+[golang]
+symbol = ""
+format = '[ ── ](fg:overlay1)[$symbol $version](fg:green)'
+
+[nodejs]
+symbol = ""
+format = '[ ── ](fg:overlay1)[$symbol $version](fg:green)'
+
+[php]
+symbol = ""
+format = '[ ── ](fg:overlay1)[$symbol $version](fg:green)'
+
+[java]
+symbol = " "
+format = '[ ── ](fg:overlay1)[$symbol$version](fg:green)'
+
+[kotlin]
+symbol = ""
+format = '[ ── ](fg:overlay1)[$symbol$version](fg:green)'
+
+[haskell]
+symbol = ""
+format = '[ ── ](fg:overlay1)[$symbol$version](fg:green)'
+
+[python]
+symbol = ""
+format = '[ ── ](fg:overlay1)[$symbol $version](fg:green)'
+
+[docker_context]
+symbol = ""
+format = '[ ── ](fg:overlay1)[$symbol $context](fg:sapphire)'
+
+[conda]
+symbol = "  "
+format = '[ ── ](fg:overlay1)[$symbol$environment](fg:sapphire)'
+ignore_base = false
+
+# ─── Right side ───────────────────────────────────────────────────────────────
+[cmd_duration]
+show_milliseconds = false
+format = '[ ── $duration](fg:overlay2)'
+disabled = false
+show_notifications = true
+min_time_to_notify = 45000
+
+[fill]
+symbol = " "
+
+[time]
+disabled = false
+time_format = "%R"
+format = '[$time](fg:overlay2)'
+
+[line_break]
+disabled = true
+
+# ─── Prompt character — Brand of Sacrifice ────────────────────────────────────
+[character]
+disabled = false
+success_symbol = '[𖤐](bold fg:yellow)'
+error_symbol   = '[𖤐](bold fg:red)'
+vimcmd_symbol  = '[𖤐](bold fg:green)'
+vimcmd_replace_one_symbol = '[𖤐](bold fg:peach)'
+vimcmd_replace_symbol     = '[𖤐](bold fg:peach)'
+vimcmd_visual_symbol      = '[𖤐](bold fg:yellow)'
+
+# ─── Palette ──────────────────────────────────────────────────────────────────
+[palettes.berserk]
+rosewater = "#f5ede0"
+flamingo  = "#e8d8c4"
+pink      = "#e74c3c"
+mauve     = "#c0392b"
+red       = "#c0392b"
+maroon    = "#8b1a1a"
+peach     = "#c98327"
+yellow    = "#c9a227"
+green     = "#8fa4b8"
+teal      = "#9e6535"
+sky       = "#8fa4b8"
+sapphire  = "#7a8fa6"
+blue      = "#6b8fa6"
+lavender  = "#e8d8c4"
+text      = "#e8d8c4"
+subtext1  = "#dccaad"
+subtext0  = "#c9b89a"
+overlay2  = "#9e7860"
+overlay1  = "#7a5640"
+overlay0  = "#5c3d28"
+surface2  = "#3d2415"
+surface1  = "#2e1b0d"
+surface0  = "#1e1208"
+base      = "#0d0906"
+mantle    = "#080402"
+crust     = "#030201"
