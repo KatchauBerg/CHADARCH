@@ -1,0 +1,115 @@
+/**
+ * clipboard.rasi — Clipboard history dropdown
+ * Used by: cliphist list | rofi -dmenu -theme ~/.config/rofi/clipboard.rasi
+ */
+
+// Config //
+configuration {
+    modi:                        "drun";
+    show-icons:                  false;
+    font:                        "CaskaydiaCove Nerd Font 10";
+}
+
+@theme "~/.config/rofi/theme.rasi"
+
+
+// Main //
+window {
+    width:                       30em;
+    height:                      30em;
+    transparency:                "real";
+    fullscreen:                  false;
+    enabled:                     true;
+    cursor:                      "default";
+    spacing:                     0em;
+    padding:                     0em;
+    border:                      2px solid;
+    border-color:                @main-br;
+    border-radius:               12px;
+    background-color:            @main-bg;
+}
+mainbox {
+    enabled:                     true;
+    spacing:                     0em;
+    padding:                     0.5em;
+    orientation:                 vertical;
+    children:                    [ "inputbar", "listbox" ];
+    background-color:            transparent;
+}
+
+
+// Inputs //
+inputbar {
+    enabled:                     true;
+    padding:                     0em;
+    children:                    [ "entry" ];
+    background-color:            @main-bg;
+    expand:                      false;
+}
+entry {
+    enabled:                     true;
+    padding:                     0.8em 1em;
+    text-color:                  @main-fg;
+    background-color:            @select-bg;
+    border-radius:               8px;
+    placeholder:                 "Search clipboard...";
+    placeholder-color:           @main-ex;
+}
+
+
+// Lists //
+listbox {
+    spacing:                     0em;
+    padding:                     0.3em 0em;
+    orientation:                 vertical;
+    children:                    [ "listview" ];
+    background-color:            transparent;
+}
+listview {
+    enabled:                     true;
+    padding:                     0.3em;
+    columns:                     1;
+    lines:                       11;
+    cycle:                       true;
+    fixed-height:                true;
+    fixed-columns:               false;
+    expand:                      false;
+    cursor:                      "default";
+    background-color:            transparent;
+    text-color:                  @main-fg;
+}
+
+
+// Elements //
+element {
+    enabled:                     true;
+    padding:                     0.4em 0.8em;
+    cursor:                      pointer;
+    background-color:            transparent;
+    text-color:                  @main-fg;
+    border-radius:               6px;
+}
+element selected.normal {
+    background-color:            @select-bg;
+    text-color:                  @select-fg;
+}
+element-text {
+    vertical-align:              0.0;
+    horizontal-align:            0.0;
+    cursor:                      inherit;
+    background-color:            transparent;
+    text-color:                  inherit;
+}
+
+// Error message //
+error-message {
+    text-color:                  @main-fg;
+    background-color:            @main-bg;
+    children:                    [ "textbox" ];
+}
+textbox {
+    text-color:                  inherit;
+    background-color:            inherit;
+    vertical-align:              0.5;
+    horizontal-align:            0.5;
+}

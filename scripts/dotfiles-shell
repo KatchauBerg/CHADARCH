@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+# dotfiles-shell — Central dispatcher for all dotfiles scripts
+# Keybinds call: exec, dotfiles-shell <command> [args...]
+#
+# Usage: dotfiles-shell <command> [args...]
+
+set -euo pipefail
+
+source "$(dirname "$(realpath "$0")")/globalcontrol.sh"
+
+SCRIPTS_DIR="$DOTFILES_DIR/scripts"
+
+usage() {
+    cat <<'EOF'
+dotfiles-shell — dotfiles script dispatcher
+
+Commands:
+  close                   Gracefully close window (Steam-aware)
+  lock                    Lock screen (hyprlock)
+  screenshot [--area] [--save] [--monitor] [--freeze]
+                          Capture screenshot
+  volumecontrol -o [i|d|m]
+                          Volume: increase / decrease / mute
+  brightnesscontrol -o [i|d]
+                          Brightness: increase / decrease
+  wallpaper [--random|--next|--prev|--select|<path>]
+                          Manage wallpaper
+  themeselect             Open rofi theme picker
+  themeswitch <name>      Switch to named theme
+  rofi-style [--select|<n>]
+                          Select rofi launcher style
+  animations [--select|<preset>]
+                          Manage animation presets
+  workflow [--select|<name>]
+                          Switch Hyprland workflow profile
+  shaders [--select|--off|<name>]
+                          Apply/toggle screen shader
+  gamemode [on|off]       Toggle game mode
+  power-menu              Open power menu
+  waybar-layout [next|prev|<n>]
+                          Cycle waybar layouts
+  reload                  Reload Hyprland config
+  help                    Show this message
+EOF
+}
+
+cmd="${1:-}"
+shift || true
+
+case "$cmd" in
+    close)
+        exec "$SCRIPTS_DIR/dontkillsteam.sh" "$@"
+        ;;
+    lock)
+        exec hyprlock "$@"
+        ;;
+    screenshot)
+        exec "$SCRIPTS_DIR/screenshot.sh" "$@"
+        ;;
+    volumecontrol)
+        exec "$SCRIPTS_DIR/volumecontrol.sh" "$@"
+        ;;
+    brightnesscontrol)
+        exec "$SCRIPTS_DIR/brightnesscontrol.sh" "$@"
+        ;;
+    wallpaper)
+        exec "$SCRIPTS_DIR/wallpaper.sh" "$@"
+        ;;
+    themeselect)
+        exec "$SCRIPTS_DIR/theme-select.sh" "$@"
+        ;;
+    rofi-style)
+        exec "$SCRIPTS_DIR/rofi-style.sh" "$@"
+        ;;
+    themeswitch)
+        exec "$SCRIPTS_DIR/theme-switch.sh" "$@"
+        ;;
+    animations)
+        exec "$SCRIPTS_DIR/animations-select.sh" "$@"
+        ;;
+    workflow)
+        exec "$SCRIPTS_DIR/workflow.sh" "$@"
+        ;;
+    shaders)
+        exec "$SCRIPTS_DIR/shaders.sh" "$@"
+        ;;
+    gamemode)
+        exec "$SCRIPTS_DIR/gamemode.sh" "$@"
+        ;;
+    power-menu)
+        exec "$SCRIPTS_DIR/power-menu.sh" "$@"
+        ;;
+    waybar-layout)
+        exec "$SCRIPTS_DIR/waybar-layout.sh" "$@"
+        ;;
+    reload)
+        hyprctl reload
+        ;;
+    help|--help|-h|"")
+        usage
+        ;;
+    *)
+        print_log -err "Unknown command: $cmd"
+        echo ""
+        usage
+        exit 1
+        ;;
+esac

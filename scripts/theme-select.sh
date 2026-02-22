@@ -4,9 +4,11 @@
 
 set -euo pipefail
 
-DOTFILES_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-CURRENT_THEME="$(cat "$DOTFILES_DIR/.theme-current" 2>/dev/null || echo "")"
-THUMB_DIR="$HOME/.cache/theme-thumbs"
+DOTFILES_DIR="$(cd "$(dirname "$(realpath "$0")")/.." && pwd)"
+source "$DOTFILES_DIR/scripts/globalcontrol.sh"
+
+CURRENT_THEME="$(get_current_theme)"
+THUMB_DIR="$XDG_CACHE_HOME/theme-thumbs"
 
 mkdir -p "$THUMB_DIR"
 
@@ -65,7 +67,7 @@ if [[ -z "$entries" ]]; then
 fi
 
 # Show rofi picker
-rofi_theme="$HOME/.config/rofi/theme.rasi"
+rofi_theme="$HOME/.config/rofi/selector.rasi"
 rofi_args=(-dmenu -i -p "Theme" -show-icons)
 [[ -f "$rofi_theme" ]] && rofi_args+=(-theme "$rofi_theme")
 

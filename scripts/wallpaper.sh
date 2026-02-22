@@ -7,22 +7,11 @@
 
 set -euo pipefail
 
-DOTFILES_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-THUMB_DIR="$HOME/.cache/wallpaper-thumbs"
-WALLPAPER_SAVE_DIR="$HOME/.cache/theme-wallpaper"
+DOTFILES_DIR="$(cd "$(dirname "$(realpath "$0")")/.." && pwd)"
+source "$DOTFILES_DIR/scripts/globalcontrol.sh"
 
-get_current_theme() {
-    local theme_file="$DOTFILES_DIR/.theme-current"
-    if [[ -f "$theme_file" ]]; then
-        cat "$theme_file"
-    else
-        echo "catppuccin-mocha"
-    fi
-}
-
-get_wallpaper_dir() {
-    echo "$DOTFILES_DIR/themes/$(get_current_theme)/wallpapers"
-}
+THUMB_DIR="$XDG_CACHE_HOME/wallpaper-thumbs"
+WALLPAPER_SAVE_DIR="$XDG_CACHE_HOME/theme-wallpaper"
 
 set_wallpaper() {
     local wallpaper="$1"
@@ -98,7 +87,7 @@ select_wallpaper() {
     fi
 
     # Show rofi picker
-    local rofi_theme="$HOME/.config/rofi/theme.rasi"
+    local rofi_theme="$HOME/.config/rofi/selector.rasi"
     local -a rofi_args=(-dmenu -i -p "Wallpaper" -show-icons)
     [[ -f "$rofi_theme" ]] && rofi_args+=(-theme "$rofi_theme")
 
@@ -122,6 +111,49 @@ select_wallpaper() {
     fi
 }
 
+cycle_wallpaper() {
+    local direction="$1"  # next or prev
+    local wallpaper_dir
+    wallpaper_dir="$(get_wallpaper_dir)"
+
+    mapfile -t wallpapers < <(find "$wallpaper_dir" -maxdepth 1 -type f \
+        \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.webp" \) | sort)
+
+    if [[ ${#wallpapers[@]} -eq 0 ]]; then
+        echo "No wallpapers found in $wallpaper_dir" >&2
+        exit 1
+    fi
+
+    local current=""
+    local save_file="$WALLPAPER_SAVE_DIR/$(get_current_theme)"
+    [[ -f "$save_file" ]] && current="$(cat "$save_file")"
+
+    local target=""
+    local count=${#wallpapers[@]}
+
+    for i in "${!wallpapers[@]}"; do
+        if [[ "${wallpapers[$i]}" == "$current" ]]; then
+            if [[ "$direction" == "next" ]]; then
+                target="${wallpapers[$(( (i + 1) % count ))]}"
+            else
+                target="${wallpapers[$(( (i - 1 + count) % count ))]}"
+            fi
+            break
+        fi
+    done
+
+    # Current wallpaper not found in list — start from beginning/end
+    if [[ -z "$target" ]]; then
+        if [[ "$direction" == "next" ]]; then
+            target="${wallpapers[0]}"
+        else
+            target="${wallpapers[$(( count - 1 ))]}"
+        fi
+    fi
+
+    set_wallpaper "$target"
+}
+
 case "${1:-}" in
     --random)
         WALLPAPER_DIR="$(get_wallpaper_dir)"
@@ -132,11 +164,17 @@ case "${1:-}" in
         fi
         set_wallpaper "$WALLPAPER"
         ;;
+    --next)
+        cycle_wallpaper next
+        ;;
+    --prev)
+        cycle_wallpaper prev
+        ;;
     --select)
         select_wallpaper
         ;;
     "")
-        echo "Usage: $(basename "$0") <path> | --random | --select"
+        echo "Usage: $(basename "$0") <path> | --random | --next | --prev | --select"
         exit 1
         ;;
     *)

@@ -3,6 +3,9 @@
 
 set -euo pipefail
 
+DOTFILES_DIR="$(cd "$(dirname "$(realpath "$0")")/.." && pwd)"
+source "$DOTFILES_DIR/scripts/globalcontrol.sh"
+
 options="\n󰗽\n\n"
 
 chosen=$(echo -e "$options" | rofi -dmenu -theme "$HOME/.config/rofi/power-menu.rasi" -p "" -no-custom)

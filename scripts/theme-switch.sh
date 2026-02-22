@@ -5,13 +5,10 @@
 
 set -euo pipefail
 
-DOTFILES_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-THEME_ID="${1:-}"
+DOTFILES_DIR="$(cd "$(dirname "$(realpath "$0")")/.." && pwd)"
+source "$DOTFILES_DIR/scripts/globalcontrol.sh"
 
-# Colors for output
-info() { printf '\033[1;34m[INFO]\033[0m %s\n' "$1"; }
-ok()   { printf '\033[1;32m[ OK ]\033[0m %s\n' "$1"; }
-err()  { printf '\033[1;31m[ERR]\033[0m %s\n' "$1" >&2; }
+THEME_ID="${1:-}"
 
 # Validate theme
 if [[ -z "$THEME_ID" ]]; then
@@ -77,11 +74,27 @@ process_template "$DOTFILES_DIR/templates/hypr/hyprlock.conf" \
 process_template "$DOTFILES_DIR/templates/hypr/hypridle.conf" \
     "$HOME/.config/hypr/hypridle.conf"
 
-process_template "$DOTFILES_DIR/templates/waybar/config.jsonc" \
-    "$HOME/.config/waybar/config.jsonc"
+# Keybindings: static file, no color variables — just copy
+KEYBINDINGS_SRC="$DOTFILES_DIR/templates/hypr/keybindings.conf"
+if [[ -f "$KEYBINDINGS_SRC" ]]; then
+    cp "$KEYBINDINGS_SRC" "$HOME/.config/hypr/keybindings.conf"
+    ok "keybindings.conf"
+fi
 
-process_template "$DOTFILES_DIR/templates/waybar/style.css" \
-    "$HOME/.config/waybar/style.css"
+# Waybar: use current layout (default to layout 1)
+WAYBAR_LAYOUT_N="$(get_waybar_layout)"
+WAYBAR_LAYOUT_DIR="$DOTFILES_DIR/templates/waybar/layouts/$WAYBAR_LAYOUT_N"
+if [[ -d "$WAYBAR_LAYOUT_DIR" ]]; then
+    process_template "$WAYBAR_LAYOUT_DIR/config.jsonc" "$HOME/.config/waybar/config.jsonc"
+    process_template "$WAYBAR_LAYOUT_DIR/style.css" "$HOME/.config/waybar/style.css"
+else
+    # Fallback to layout 1 if saved layout doesn't exist
+    process_template "$DOTFILES_DIR/templates/waybar/layouts/1/config.jsonc" \
+        "$HOME/.config/waybar/config.jsonc"
+    process_template "$DOTFILES_DIR/templates/waybar/layouts/1/style.css" \
+        "$HOME/.config/waybar/style.css"
+    set_waybar_layout "1"
+fi
 
 process_template "$DOTFILES_DIR/templates/kitty/theme.conf" \
     "$HOME/.config/kitty/theme.conf"
@@ -100,6 +113,30 @@ process_template "$DOTFILES_DIR/templates/rofi/theme.rasi" \
 
 process_template "$DOTFILES_DIR/templates/rofi/power-menu.rasi" \
     "$HOME/.config/rofi/power-menu.rasi"
+
+# Deploy rofi styles (static — no template variables)
+ROFI_STYLES_SRC="$DOTFILES_DIR/templates/rofi/styles"
+if [[ -d "$ROFI_STYLES_SRC" ]]; then
+    mkdir -p "$HOME/.config/rofi/styles"
+    for style in "$ROFI_STYLES_SRC"/*.rasi; do
+        [[ -f "$style" ]] && cp "$style" "$HOME/.config/rofi/styles/$(basename "$style")"
+    done
+    ok "rofi styles"
+fi
+
+# Deploy rofi utility themes
+for util in clipboard selector; do
+    src="$DOTFILES_DIR/templates/rofi/$util.rasi"
+    [[ -f "$src" ]] && cp "$src" "$HOME/.config/rofi/$util.rasi" && ok "rofi $util.rasi"
+done
+
+# Create launcher.rasi if missing (points to active style)
+LAUNCHER="$HOME/.config/rofi/launcher.rasi"
+if [[ ! -f "$LAUNCHER" ]]; then
+    STYLE_N="$(get_conf ROFI_STYLE 1)"
+    echo "@theme \"$HOME/.config/rofi/styles/style_${STYLE_N}.rasi\"" > "$LAUNCHER"
+    ok "launcher.rasi → style_${STYLE_N}"
+fi
 
 process_template "$DOTFILES_DIR/templates/cava/config" \
     "$HOME/.config/cava/config"
@@ -136,6 +173,47 @@ else
     sed -i 's/"type": "kitty-direct"/"type": "auto"/; s/"source": ".*"/"source": "auto"/' "$HOME/.config/fastfetch/config.jsonc"
     ok "fastfetch logo (distro default)"
 fi
+
+# Deploy static configs (not processed as templates)
+WINDOWRULES_SRC="$DOTFILES_DIR/templates/hypr/windowrules.conf"
+if [[ -f "$WINDOWRULES_SRC" ]]; then
+    cp "$WINDOWRULES_SRC" "$HOME/.config/hypr/windowrules.conf"
+    ok "windowrules.conf"
+fi
+
+# Deploy animation presets to ~/.config/hypr/animations/
+ANIM_PRESETS_DIR="$DOTFILES_DIR/templates/hypr/animations"
+if [[ -d "$ANIM_PRESETS_DIR" ]]; then
+    mkdir -p "$HOME/.config/hypr/animations"
+    for preset in "$ANIM_PRESETS_DIR"/*.conf; do
+        [[ -f "$preset" ]] && cp "$preset" "$HOME/.config/hypr/animations/$(basename "$preset")"
+    done
+    ok "animation presets"
+fi
+
+# GTK theming (only if GTK_THEME is set in colors.sh)
+apply_gtk_theme() {
+    local gtk_theme="${GTK_THEME:-}"
+    local icon_theme="${ICON_THEME:-}"
+    local cursor_theme="${CURSOR_THEME:-}"
+    local cursor_size="${CURSOR_SIZE:-24}"
+
+    if [[ -n "$gtk_theme" ]]; then
+        gsettings set org.gnome.desktop.interface gtk-theme "$gtk_theme" 2>/dev/null || true
+        ok "GTK theme: $gtk_theme"
+    fi
+    if [[ -n "$icon_theme" ]]; then
+        gsettings set org.gnome.desktop.interface icon-theme "$icon_theme" 2>/dev/null || true
+        ok "Icon theme: $icon_theme"
+    fi
+    if [[ -n "$cursor_theme" ]]; then
+        gsettings set org.gnome.desktop.interface cursor-theme "$cursor_theme" 2>/dev/null || true
+        gsettings set org.gnome.desktop.interface cursor-size "$cursor_size" 2>/dev/null || true
+        hyprctl setcursor "$cursor_theme" "$cursor_size" 2>/dev/null || true
+        ok "Cursor theme: $cursor_theme"
+    fi
+}
+apply_gtk_theme
 
 # Neovim: update colorscheme file
 NVIM_THEME_FILE="$HOME/.config/nvim/colorscheme.lua"

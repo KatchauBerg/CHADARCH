@@ -1,38 +1,30 @@
-/* Power Menu — HyDE Selector Horizontal Grid */
+/* Power Menu — used by scripts/power-menu.sh */
 
-* {
-    bg:           #{{BASE}}cc;
-    bg-alt:       #{{MANTLE}}ee;
-    fg:           #{{TEXT}};
-    fg-alt:       #{{SUBTEXT0}};
-    accent:       #{{ACCENT}};
-    accent-alt:   #{{ACCENT_ALT}};
-    urgent:       #{{RED}};
-    surface:      #{{SURFACE0}};
-    transparent:  #00000000;
-
-    font: "CaskaydiaCove Nerd Font 28";
-
-    background-color: @transparent;
-    text-color:       @fg;
+configuration {
+    modi:             "drun";
+    show-icons:       false;
+    drun-display-format: "{name}";
+    font:             "CaskaydiaCove Nerd Font 28";
 }
+
+@theme "~/.config/rofi/theme.rasi"
 
 window {
     transparency:     "real";
     width:            520px;
     padding:          0;
     border:           2px solid;
-    border-color:     @accent;
+    border-color:     @main-br;
     border-radius:    16px;
-    background-color: @bg;
+    background-color: @main-bg;
     location:         center;
     anchor:           center;
 }
 
 mainbox {
-    spacing:          0;
-    padding:          0;
-    background-color: @transparent;
+    spacing:          0em;
+    padding:          0em;
+    background-color: transparent;
     children:         [ "listview" ];
 }
 
@@ -43,7 +35,7 @@ listview {
     padding:          24px;
     spacing:          16px;
     scrollbar:        false;
-    background-color: @transparent;
+    background-color: transparent;
     cycle:            true;
     layout:           vertical;
 }
@@ -53,18 +45,19 @@ element {
     padding:          24px 16px;
     spacing:          12px;
     border-radius:    12px;
-    background-color: @transparent;
+    background-color: transparent;
     cursor:           pointer;
+    text-color:       @main-fg;
 }
 
 element normal.normal {
-    background-color: @transparent;
-    text-color:       @fg;
+    background-color: transparent;
+    text-color:       @main-fg;
 }
 
 element selected.normal {
-    background-color: @accent;
-    text-color:       @bg-alt;
+    background-color: @select-bg;
+    text-color:       @select-fg;
 }
 
 element-text {
@@ -77,4 +70,18 @@ element-text {
 element-icon {
     horizontal-align: 0.5;
     size:             0;
+}
+
+error-message {
+    text-color:       @main-fg;
+    background-color: @main-bg;
+    text-transform:   capitalize;
+    children:         [ "textbox" ];
+}
+
+textbox {
+    text-color:       inherit;
+    background-color: inherit;
+    vertical-align:   0.5;
+    horizontal-align: 0.5;
 }

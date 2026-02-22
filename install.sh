@@ -1,17 +1,19 @@
 #!/usr/bin/env bash
 # Dotfiles installer
-# Installs packages, creates config dirs, and applies default theme
+# Installs packages, deploys all config modules, and applies default theme.
 
 set -euo pipefail
 
 DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
 DEFAULT_THEME="catppuccin-mocha"
+HYPR_CONF="$HOME/.config/hypr/hyprland.conf"
+HYPR_TEMPLATES="$DOTFILES_DIR/templates/hypr"
 
-info() { printf '\033[1;34m[INFO]\033[0m %s\n' "$1"; }
-ok()   { printf '\033[1;32m[ OK ]\033[0m %s\n' "$1"; }
-err()  { printf '\033[1;31m[ERR]\033[0m %s\n' "$1" >&2; }
+source "$DOTFILES_DIR/scripts/globalcontrol.sh"
 
-# Install packages
+# ---------------------------------------------------------------------------
+# PACKAGES
+# ---------------------------------------------------------------------------
 info "Installing packages..."
 PACKAGES=(
     hyprlock
@@ -36,76 +38,136 @@ PACKAGES=(
     playerctl
     dolphin
     libnotify
+    cliphist        # clipboard history manager (Super+V)
+    wireplumber     # audio session manager (required by volumecontrol)
+    xdotool         # used by dontkillsteam.sh to hide Steam to tray
+    # hyprpicker   # color picker (AUR) — install manually: yay -S hyprpicker
 )
-
 sudo pacman -S --needed --noconfirm "${PACKAGES[@]}"
 ok "Packages installed"
 
-# Create config directories
+# ---------------------------------------------------------------------------
+# SCRIPT SYMLINKS  (~/.local/bin)
+# ---------------------------------------------------------------------------
+info "Installing scripts to ~/.local/bin..."
+mkdir -p "$HOME/.local/bin"
+for script in "$DOTFILES_DIR/scripts/"*.sh; do
+    name="$(basename "$script" .sh)"
+    ln -sf "$script" "$HOME/.local/bin/$name"
+    chmod +x "$script"
+done
+ln -sf "$DOTFILES_DIR/scripts/dotfiles-shell" "$HOME/.local/bin/dotfiles-shell"
+chmod +x "$DOTFILES_DIR/scripts/dotfiles-shell"
+ok "Scripts symlinked to ~/.local/bin"
+
+# ---------------------------------------------------------------------------
+# DIRECTORIES
+# ---------------------------------------------------------------------------
 info "Creating config directories..."
-mkdir -p "$HOME/.config/hypr"
+mkdir -p "$HOME/.config/hypr/animations"
+mkdir -p "$HOME/.config/hypr/workflows"
+mkdir -p "$HOME/.config/hypr/shaders"
 mkdir -p "$HOME/.config/waybar"
 mkdir -p "$HOME/.config/kitty"
 mkdir -p "$HOME/.config/wofi"
 mkdir -p "$HOME/.config/dunst"
-mkdir -p "$HOME/.config/rofi"
+mkdir -p "$HOME/.config/rofi/styles"
 mkdir -p "$HOME/.config/fastfetch"
 mkdir -p "$HOME/.config/cava"
 mkdir -p "$HOME/.config/nvim"
 mkdir -p "$HOME/.cache/wallpaper-thumbs"
 mkdir -p "$HOME/.cache/theme-thumbs"
 mkdir -p "$HOME/.cache/theme-wallpaper"
+mkdir -p "$HOME/.local/state/dotfiles"
 mkdir -p "$HOME/Pictures/Screenshots"
 ok "Directories created"
 
-# Add theme source to hyprland.conf if not present
-HYPR_CONF="$HOME/.config/hypr/hyprland.conf"
-if [[ -f "$HYPR_CONF" ]]; then
-    if ! grep -q "theme-current.conf" "$HYPR_CONF"; then
-        info "Adding theme source to hyprland.conf..."
-        sed -i '1s/^/source = ~\/.config\/hypr\/theme-current.conf\n\n/' "$HYPR_CONF"
-        ok "Theme source added"
-    fi
+# ---------------------------------------------------------------------------
+# HYPRLAND CONFIG — modular deployment
+# ---------------------------------------------------------------------------
+info "Deploying Hyprland config modules..."
 
-    # Add autostart if not present
-    if ! grep -q "exec-once = waybar" "$HYPR_CONF"; then
-        info "Adding autostart to hyprland.conf..."
-        cat >> "$HYPR_CONF" << 'EOF'
+# hyprland.conf — entry point (always managed, safe to overwrite)
+cp "$HYPR_TEMPLATES/hyprland.conf" "$HYPR_CONF"
 
-# Autostart (managed by dotfiles)
-exec-once = waybar
-exec-once = dunst
-exec-once = hypridle
-exec-once = swww-daemon
-EOF
-        ok "Autostart added"
-    fi
+# Managed modules — always deployed (overwrite safe)
+for module in env nvidia monitors apps autostart layouts windowrules keybindings; do
+    cp "$HYPR_TEMPLATES/${module}.conf" "$HOME/.config/hypr/${module}.conf"
+done
+ok "Managed modules deployed"
 
-    # Update terminal and menu
-    sed -i 's/^\$terminal =.*/$terminal = kitty/' "$HYPR_CONF"
-    sed -i 's/^\$menu =.*/$menu = rofi -show drun -theme ~\/.config\/rofi\/theme.rasi/' "$HYPR_CONF"
-
-    # Add keybinds if not present
-    if ! grep -q "hyprlock" "$HYPR_CONF"; then
-        info "Adding keybinds to hyprland.conf..."
-        cat >> "$HYPR_CONF" << 'EOF'
-
-# Keybinds (managed by dotfiles)
-bind = $mainMod, L, exec, hyprlock
-bind = , Print, exec, ~/dotfiles/scripts/screenshot.sh
-bind = SHIFT, Print, exec, ~/dotfiles/scripts/screenshot.sh --area
-bind = $mainMod, Print, exec, ~/dotfiles/scripts/screenshot.sh --save
-bind = $mainMod SHIFT, Print, exec, ~/dotfiles/scripts/screenshot.sh --area --save
-bind = $mainMod, W, exec, ~/dotfiles/scripts/wallpaper.sh --select
-bind = $mainMod SHIFT, W, exec, ~/dotfiles/scripts/wallpaper.sh --random
-bind = $mainMod, D, exec, ~/dotfiles/scripts/theme-select.sh
-bind = $mainMod, X, exec, ~/dotfiles/scripts/power-menu.sh
-EOF
-        ok "Keybinds added"
-    fi
+# userprefs.conf — deployed ONCE, never overwritten
+if [[ ! -f "$HOME/.config/hypr/userprefs.conf" ]]; then
+    cp "$HYPR_TEMPLATES/userprefs.conf" "$HOME/.config/hypr/userprefs.conf"
+    ok "userprefs.conf deployed"
+else
+    ok "userprefs.conf already exists — skipped"
 fi
 
-# Add theme include to kitty.conf if not present
+# Animation presets
+for preset in "$HYPR_TEMPLATES/animations/"*.conf; do
+    [[ -f "$preset" ]] && cp "$preset" "$HOME/.config/hypr/animations/$(basename "$preset")"
+done
+# Write animations.conf loader (only if not already customized)
+if [[ ! -f "$HOME/.config/hypr/animations.conf" ]]; then
+    echo "source = $HOME/.config/hypr/animations/default.conf" > "$HOME/.config/hypr/animations.conf"
+fi
+ok "Animation presets deployed"
+
+# Workflow presets
+for wf in "$HYPR_TEMPLATES/workflows/"*.conf; do
+    [[ -f "$wf" ]] && cp "$wf" "$HOME/.config/hypr/workflows/$(basename "$wf")"
+done
+# Write workflows.conf loader (only if not already customized)
+if [[ ! -f "$HOME/.config/hypr/workflows.conf" ]]; then
+    cat > "$HOME/.config/hypr/workflows.conf" << 'EOF'
+# workflows.conf — Active workflow profile
+# Managed by dotfiles — use: dotfiles-shell workflow --select
+
+$WORKFLOW             = default
+$WORKFLOW_ICON        =
+$WORKFLOW_DESCRIPTION = Default — normal desktop settings
+$WORKFLOW_PATH        = ~/.config/hypr/workflows/default.conf
+
+source = $WORKFLOW_PATH
+EOF
+fi
+ok "Workflow presets deployed"
+
+# Shaders
+for shader in "$HYPR_TEMPLATES/shaders/"*.frag; do
+    [[ -f "$shader" ]] && cp "$shader" "$HOME/.config/hypr/shaders/$(basename "$shader")"
+done
+# Write shaders.conf (only if not already customized)
+if [[ ! -f "$HOME/.config/hypr/shaders.conf" ]]; then
+    cp "$HYPR_TEMPLATES/shaders.conf" "$HOME/.config/hypr/shaders.conf"
+fi
+ok "Shaders deployed"
+
+# ---------------------------------------------------------------------------
+# ROFI STYLES
+# ---------------------------------------------------------------------------
+info "Deploying rofi styles..."
+ROFI_STYLES_SRC="$DOTFILES_DIR/templates/rofi/styles"
+if [[ -d "$ROFI_STYLES_SRC" ]]; then
+    for style in "$ROFI_STYLES_SRC"/*.rasi; do
+        [[ -f "$style" ]] && cp "$style" "$HOME/.config/rofi/styles/$(basename "$style")"
+    done
+fi
+# Deploy utility themes
+for util in clipboard selector; do
+    src="$DOTFILES_DIR/templates/rofi/$util.rasi"
+    [[ -f "$src" ]] && cp "$src" "$HOME/.config/rofi/$util.rasi"
+done
+# Create launcher.rasi (points to style 1 by default)
+if [[ ! -f "$HOME/.config/rofi/launcher.rasi" ]]; then
+    echo "@theme \"$HOME/.config/rofi/styles/style_1.rasi\"" > "$HOME/.config/rofi/launcher.rasi"
+fi
+ok "Rofi styles deployed"
+
+# ---------------------------------------------------------------------------
+# KITTY
+# ---------------------------------------------------------------------------
 KITTY_CONF="$HOME/.config/kitty/kitty.conf"
 if [[ -f "$KITTY_CONF" ]]; then
     if ! grep -q "include ./theme.conf" "$KITTY_CONF"; then
@@ -115,21 +177,16 @@ if [[ -f "$KITTY_CONF" ]]; then
     fi
 fi
 
-# Setup .zshrc
+# ---------------------------------------------------------------------------
+# ZSHRC
+# ---------------------------------------------------------------------------
 ZSHRC="$HOME/.zshrc"
 if [[ -f "$ZSHRC" ]]; then
-    # Add fastfetch (direct call) if not present
     if ! grep -q "fastfetch" "$ZSHRC"; then
         info "Adding fastfetch to .zshrc..."
-        cat >> "$ZSHRC" << 'EOF'
-
-# Fastfetch on terminal open
-fastfetch
-EOF
+        printf '\n# Fastfetch on terminal open\nfastfetch\n' >> "$ZSHRC"
         ok "Fastfetch added to .zshrc"
     fi
-
-    # Add starship init if not present
     if ! grep -q "starship init" "$ZSHRC"; then
         info "Adding starship to .zshrc..."
         sed -i '1s/^/eval "$(starship init zsh)"\n/' "$ZSHRC"
@@ -137,23 +194,28 @@ EOF
     fi
 fi
 
-# Apply default theme
+# ---------------------------------------------------------------------------
+# APPLY DEFAULT THEME
+# ---------------------------------------------------------------------------
 info "Applying default theme: $DEFAULT_THEME"
 "$DOTFILES_DIR/scripts/theme-switch.sh" "$DEFAULT_THEME"
 
 ok "Installation complete!"
 echo ""
-echo "Keybinds:"
-echo "  Super+D         → Theme selector"
-echo "  Super+W         → Wallpaper selector"
-echo "  Super+Shift+W   → Random wallpaper"
-echo "  Super+X         → Power menu"
-echo "  Super+L         → Lock screen"
-echo "  Print           → Screenshot (clipboard)"
-echo "  Shift+Print     → Screenshot area (clipboard)"
+echo "=== Keybinds ==="
+echo "  Window:     Super+Q=close  Super+W=float  Super+L=lock  Shift+F11=fullscreen"
+echo "  Focus:      Super+Arrows   Super+1-9=workspace  Super+Tab=window list"
+echo "  Apps:       Super+T=terminal  Super+E=files  Super+B=browser  Super+A=launcher"
+echo "              Super+V=clipboard  Super+P=screenshot  Print=fullscreen shot"
+echo "  Theming:    Super+D=themes  Super+Shift+W=wallpaper  Super+R=random wall"
+echo "              Super+Shift+Y=animations  Super+Shift+F=shaders  Super+F1=shader off"
+echo "  Workflow:   Super+Shift+X=profile  Super+Alt+G=game mode"
+echo "  Waybar:     Super+Alt+Up/Down=cycle layouts"
+echo "  Media:      F10=mute  F11=vol-  F12=vol+  XF86Brightness keys"
 echo ""
 echo "Don't forget to:"
 echo "  1. Add wallpapers to ~/dotfiles/themes/<theme>/wallpapers/"
-echo "  2. Add fastfetch image to ~/dotfiles/themes/<theme>/fastfetch/"
-echo "  3. Configure Neovim to read ~/.config/nvim/colorscheme.lua"
-echo "  4. Reload Hyprland: hyprctl reload"
+echo "  2. Comment out nvidia.conf source in hyprland.conf if not on NVIDIA"
+echo "  3. Set your monitor in ~/.config/hypr/monitors.conf"
+echo "  4. Set your apps in ~/.config/hypr/apps.conf"
+echo "  5. Install color picker (AUR): yay -S hyprpicker"
